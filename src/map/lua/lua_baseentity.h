@@ -683,6 +683,8 @@ public:
     uint16 getWeaponDamageType(uint8 slotID);                        // gets the type of weapon equipped
     uint8  getWeaponSkillType(uint8 slotID);                         // gets the type of weapon equipped
     uint8  getWeaponSubSkillType(uint8 slotID);                      // gets the subskill of weapon equipped
+    uint8  getWeaponHitCount(uint8 slotID);                          // gets the hit count of weapon equipped, which is processed as OaX
+    uint8  getOccasionallyAttacksHitCount(uint8 numHits);            // returns number of hits from Occasionally Attacks N times
     auto   getWSSkillchainProp() -> std::tuple<uint8, uint8, uint8>; // returns weapon skill's skillchain properties (up to 3)
 
     int32 takeWeaponskillDamage(CLuaBaseEntity* attacker, int32 damage, uint8 atkType, uint8 dmgType, uint8 slot, bool primary,

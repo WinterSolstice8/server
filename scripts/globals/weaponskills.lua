@@ -228,6 +228,18 @@ local function getMultiAttacks(attacker, target, wsParams)
             bonusHits = bonusHits + 2
         elseif i == 1 and math.random(1, 100) <= oaTwiceRate then -- Can only proc on first hit
             bonusHits = bonusHits + 1
+        elseif isJump then -- Jump OaT is processed after Mythic bonus
+            local OaXHits = 0
+
+            if attacker:getOffhandDmg() == 0 then
+                OaXHits = attacker:getWeaponHitCount(xi.slot.MAIN)
+            else
+                -- pick mainhand slot for first attack, offhand slot for second (zero indexed in C++)
+                OaXHits = attacker:getWeaponHitCount(i - 1)
+            end
+
+            -- OaXHits can return 1 for no extra hits. >= 2 are extra hits obtained from OaX procs.
+            bonusHits = bonusHits + OaXHits - 1
         end
 
         if i == 1 then

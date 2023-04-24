@@ -12158,6 +12158,28 @@ uint8 CLuaBaseEntity::getWeaponSubSkillType(uint8 slotID)
     return 0;
 }
 
+// gets the hit count of weapon equipped, which is processed as OaX
+uint8 CLuaBaseEntity::getWeaponHitCount(uint8 slotID)
+{
+    if (m_PBaseEntity->objtype != TYPE_NPC && slotID <= 3)
+    {
+        CBattleEntity* PBattleEntity = static_cast<CBattleEntity*>(m_PBaseEntity);
+        CItemWeapon* PWeapon         = static_cast<CItemWeapon*>(PBattleEntity->m_Weapons[slotID]);
+
+        if (PWeapon)
+        {
+            return PWeapon->getHitCount();
+        }
+    }
+    return 1;
+}
+
+// returns number of hits from Occasionally Attacks N times
+uint8 CLuaBaseEntity::getOccasionallyAttacksHitCount(uint8 numHits)
+{
+    return battleutils::getHitCount(numHits);
+}
+
 /************************************************************************
 *  Function: getWSSkillchainProp()
 *  Purpose : For the current weaponskill in use, returns the properties of Primary,
@@ -15719,6 +15741,8 @@ void CLuaBaseEntity::Register()
     SOL_REGISTER("getWeaponDamageType", CLuaBaseEntity::getWeaponDamageType);
     SOL_REGISTER("getWeaponSkillType", CLuaBaseEntity::getWeaponSkillType);
     SOL_REGISTER("getWeaponSubSkillType", CLuaBaseEntity::getWeaponSubSkillType);
+    SOL_REGISTER("getWeaponHitCount", CLuaBaseEntity::getWeaponHitCount);
+    SOL_REGISTER("getOccasionallyAttacksHitCount", CLuaBaseEntity::getOccasionallyAttacksHitCount);
     SOL_REGISTER("getWSSkillchainProp", CLuaBaseEntity::getWSSkillchainProp);
 
     SOL_REGISTER("takeWeaponskillDamage", CLuaBaseEntity::takeWeaponskillDamage);
