@@ -649,6 +649,12 @@ void CLatentEffectContainer::ProcessLatentEffects(const std::function<bool(CLate
 bool CLatentEffectContainer::ProcessLatentEffect(CLatentEffect& latentEffect)
 {
     TracyZoneScoped;
+
+    if (m_POwner->loc.zone == nullptr)
+    {
+        return false;
+    }
+
     // Our default case un-finds our latent prevent us from toggling a latent we don't have programmed
     auto expression  = false;
     auto latentFound = true;
