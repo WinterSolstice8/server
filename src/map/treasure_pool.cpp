@@ -462,7 +462,9 @@ void CTreasurePool::CheckTreasureItem(time_point tick, uint8 SlotID)
         return;
     }
 
-    if ((tick - m_PoolItems[SlotID].TimeStamp) > treasure_livetime ||
+    bool canFloor = (tick - m_PoolItems[SlotID].TimeStamp) > treasure_livetime;
+
+    if (canFloor ||
         (m_TreasurePoolType == TREASUREPOOL_SOLO && members[0]->getStorage(LOC_INVENTORY)->GetFreeSlotsCount() != 0) ||
         m_PoolItems[SlotID].Lotters.size() == members.size())
     {
@@ -487,12 +489,12 @@ void CTreasurePool::CheckTreasureItem(time_point tick, uint8 SlotID)
                 {
                     TreasureWon(highestInfo.member, SlotID);
                 }
-                else
+                else if (canFloor)
                 {
                     TreasureError(highestInfo.member, SlotID);
                 }
             }
-            else
+            else if (canFloor)
             {
                 // drop the item
                 TreasureLost(SlotID);
