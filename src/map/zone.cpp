@@ -835,17 +835,6 @@ void CZone::SpawnPCs(CCharEntity* PChar)
 
 /************************************************************************
  *                                                                       *
- *  Displaying Moogle in MogHouse                                        *
- *                                                                       *
- ************************************************************************/
-
-void CZone::SpawnMoogle(CCharEntity* PChar)
-{
-    m_zoneEntities->SpawnMoogle(PChar);
-}
-
-/************************************************************************
- *                                                                       *
  *  Displaying ships/boats in the zone (not stored in the main list).    *
  *                                                                       *
  ************************************************************************/

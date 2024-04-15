@@ -37,6 +37,7 @@ CNpcEntity::CNpcEntity()
 : m_flags(0)
 , name_prefix(0)
 , widescan(1)
+, moghouse_only(VISIBLE_ANYWHERE)
 {
     TracyZoneScoped;
     objtype    = TYPE_NPC;

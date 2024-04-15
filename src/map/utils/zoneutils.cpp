@@ -292,7 +292,8 @@ namespace zoneutils
                         "entityFlags,"
                         "look,"
                         "name_prefix, "
-                        "widescan "
+                        "widescan, "
+                        "moghouse_only "
                         "FROM npc_list INNER JOIN zone_settings "
                         "ON (npcid & 0xFFF000) >> 12 = zone_settings.zoneid "
                         "WHERE ((npcid & 0xFFF000) >> 12) = {}", zoneId);
@@ -338,8 +339,9 @@ namespace zoneutils
 
                                 db::extractFromBlob(rset, "look", PNpc->look);
 
-                                PNpc->name_prefix = (uint8)rset->getInt("name_prefix");
-                                PNpc->widescan    = (uint8)rset->getInt("widescan");
+                                PNpc->name_prefix   = (uint8)rset->getInt("name_prefix");
+                                PNpc->widescan      = (uint8)rset->getInt("widescan");
+                                PNpc->moghouse_only = static_cast<mogHouseOnlyFlags>(rset->getUInt("moghouse_only"));
 
                                 PZone->InsertNPC(PNpc);
                             }

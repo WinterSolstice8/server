@@ -310,15 +310,6 @@ void CZoneInstance::SpawnPCs(CCharEntity* PChar)
     }
 }
 
-void CZoneInstance::SpawnMoogle(CCharEntity* PChar)
-{
-    TracyZoneScoped;
-    if (PChar->PInstance)
-    {
-        PChar->PInstance->SpawnMoogle(PChar);
-    }
-}
-
 void CZoneInstance::SpawnTransport(CCharEntity* PChar)
 {
     TracyZoneScoped;

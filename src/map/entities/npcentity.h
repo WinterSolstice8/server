@@ -27,23 +27,32 @@
 
 #include "baseentity.h"
 
+enum mogHouseOnlyFlags : uint8
+{
+    VISIBLE_ANYWHERE = 0x00,
+    FIRST_FLOOR      = 0x01,
+    SECOND_FLOOR     = 0x02,
+    ALL_FLOORS       = 0x03,
+};
+
 class CNpcEntity : public CBaseEntity
 {
 public:
-    uint32       m_flags;
-    uint8        name_prefix;
-    uint8        widescan;
-    bool         m_triggerable = false;
-    uint32       getEntityFlags() const;             // Returns the current value in m_flags
-    void         setEntityFlags(uint32 EntityFlags); // Change the current value in m_flags
-    void         HideHP(bool hide);
-    bool         IsHPHidden() const;
-    void         SetUntargetable(bool untargetable);
-    bool         GetUntargetable() const override;
-    bool         IsTriggerable() const;
-    virtual bool isWideScannable() override;
-    virtual void PostTick() override;
-    virtual void Tick(time_point) override
+    uint32                   m_flags;
+    uint8                    name_prefix;
+    uint8                    widescan;
+    mogHouseOnlyFlags        moghouse_only;
+    bool                     m_triggerable = false;
+    uint32                   getEntityFlags() const;             // Returns the current value in m_flags
+    void                     setEntityFlags(uint32 EntityFlags); // Change the current value in m_flags
+    void                     HideHP(bool hide);
+    bool                     IsHPHidden() const;
+    void                     SetUntargetable(bool untargetable);
+    bool                     GetUntargetable() const override;
+    bool                     IsTriggerable() const;
+    virtual bool             isWideScannable() override;
+    virtual void             PostTick() override;
+    virtual void             Tick(time_point) override
     {
     }
 

@@ -673,38 +673,66 @@ void CZoneEntities::SpawnPETs(CCharEntity* PChar)
 void CZoneEntities::SpawnNPCs(CCharEntity* PChar)
 {
     TracyZoneScoped;
-    if (!PChar->m_moghouseID)
-    {
-        for (EntityList_t::const_iterator it = m_npcList.begin(); it != m_npcList.end(); ++it)
-        {
-            CNpcEntity*             PCurrentNpc = (CNpcEntity*)it->second;
-            SpawnIDList_t::iterator NPC         = PChar->SpawnNPCList.find(PCurrentNpc->id);
 
-            if (PCurrentNpc->status == STATUS_TYPE::NORMAL || PCurrentNpc->status == STATUS_TYPE::UPDATE)
+    for (EntityList_t::const_iterator it = m_npcList.begin(); it != m_npcList.end(); ++it)
+    {
+        CNpcEntity*             PCurrentNpc = (CNpcEntity*)it->second;
+        SpawnIDList_t::iterator NPC         = PChar->SpawnNPCList.find(PCurrentNpc->id);
+
+        if (PCurrentNpc->status == STATUS_TYPE::NORMAL || PCurrentNpc->status == STATUS_TYPE::UPDATE)
+        {
+            auto isNPCVisible = [PCurrentNpc, PChar]()
             {
-                // Is this npc "visible" to the player?
-                if (distance(PChar->loc.p, PCurrentNpc->loc.p) <= 50)
+                if (PChar->m_moghouseID != 0)
                 {
-                    // npc not in update list for player, add it in
-                    if (NPC == PChar->SpawnNPCList.end())
+                    if (PCurrentNpc->moghouse_only)
                     {
-                        PChar->SpawnNPCList.insert(NPC, SpawnIDList_t::value_type(PCurrentNpc->id, PCurrentNpc));
-                        PChar->updateEntityPacket(PCurrentNpc, ENTITY_SPAWN, UPDATE_ALL_MOB);
+                        // Player is in moghouse and NPC is visible in moghouse only...
+
+                        // If the player is on MH 2nd floor and the NPC is not visible on the second floor...
+                        if ((PChar->profile.mhflag & 0x40) && !(PCurrentNpc->moghouse_only & mogHouseOnlyFlags::SECOND_FLOOR))
+                        {
+                            // NPC is not visible on the second floor
+                            return false;
+                        }
+
+                        // If the player is on MH 1st floor and the NPC is not visible on the first floor...
+                        if (!(PChar->profile.mhflag & 0x40) && !(PCurrentNpc->moghouse_only & mogHouseOnlyFlags::FIRST_FLOOR))
+                        {
+                            // NPC is not visible on the first floor
+                            return false;
+                        }
+
+                        return true; // Player is in moghouse and the NPC is visible in moghouse
                     }
+                    return false; // Player is in the moghouse and this NPC isnt flagged to be visible in the moghouse
                 }
-                // npc not visible, remove it from spawn list if it's in there
-                else if (NPC != PChar->SpawnNPCList.end())
+                // visible by default if NPC isn't visible in moghouse
+                return PCurrentNpc->moghouse_only == VISIBLE_ANYWHERE;
+            };
+
+            // Is this npc "visible" to the player?
+            if (isNPCVisible() && distance(PChar->loc.p, PCurrentNpc->loc.p) <= 50)
+            {
+                // npc not in update list for player, add it in
+                if (NPC == PChar->SpawnNPCList.end())
                 {
-                    PChar->SpawnNPCList.erase(NPC);
-                    PChar->updateEntityPacket(PCurrentNpc, ENTITY_DESPAWN, UPDATE_NONE);
+                    PChar->SpawnNPCList.insert(NPC, SpawnIDList_t::value_type(PCurrentNpc->id, PCurrentNpc));
+                    PChar->updateEntityPacket(PCurrentNpc, ENTITY_SPAWN, UPDATE_ALL_MOB);
                 }
             }
-            // NPC not visible, remove it from spawn list if it's in there
+            // npc not visible, remove it from spawn list if it's in there
             else if (NPC != PChar->SpawnNPCList.end())
             {
                 PChar->SpawnNPCList.erase(NPC);
                 PChar->updateEntityPacket(PCurrentNpc, ENTITY_DESPAWN, UPDATE_NONE);
             }
+        }
+        // NPC not visible, remove it from spawn list if it's in there
+        else if (NPC != PChar->SpawnNPCList.end())
+        {
+            PChar->SpawnNPCList.erase(NPC);
+            PChar->updateEntityPacket(PCurrentNpc, ENTITY_DESPAWN, UPDATE_NONE);
         }
     }
 }
@@ -959,30 +987,6 @@ void CZoneEntities::SpawnPCs(CCharEntity* PChar)
             PChar->SpawnPCList[candidateChar->id] = candidateChar;
             PChar->updateCharPacket(candidateChar, ENTITY_SPAWN, UPDATE_ALL_CHAR);
             PChar->pushPacket(new CCharSyncPacket(candidateChar));
-        }
-    }
-}
-
-void CZoneEntities::SpawnMoogle(CCharEntity* PChar)
-{
-    TracyZoneScoped;
-
-    // If on Moghouse2F; don't spawn the Moogle
-    if (PChar->profile.mhflag & 0x40)
-    {
-        return;
-    }
-
-    for (EntityList_t::const_iterator it = m_npcList.begin(); it != m_npcList.end(); ++it)
-    {
-        CNpcEntity* PCurrentNpc = (CNpcEntity*)it->second;
-
-        if (PCurrentNpc->loc.p.z == 1.5 && PCurrentNpc->look.face == 0x52)
-        {
-            PCurrentNpc->status = STATUS_TYPE::NORMAL;
-            PChar->updateEntityPacket(PCurrentNpc, ENTITY_SPAWN, UPDATE_ALL_MOB);
-            PCurrentNpc->status = STATUS_TYPE::DISAPPEAR;
-            return;
         }
     }
 }
