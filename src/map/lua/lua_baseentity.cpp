@@ -14126,8 +14126,13 @@ void CLuaBaseEntity::spawnPet(sol::object const& arg0)
         if ((arg0 != sol::lua_nil) && arg0.is<int>())
         {
             uint32 petId = arg0.as<uint32>();
-            if (petId == PETID_HARLEQUINFRAME)
-            {
+
+            // TODO: code is dead and always hits the else case. What did this do? spawnPet should have always been done when PAutomaton was null --
+            // It was possible for this to not have a nullptr PAutomaton previously --
+            // But now it has nullptr to be to prevent crashes, I assume this had to do nothing important because if you had NOT yet summoned an automaton,
+            // you would summon the correct one you had in the equip menu. What gives?
+            /*if (petId == PETID_HARLEQUINFRAME)
+            {                
                 if (((CCharEntity*)m_PBaseEntity)->PAutomaton)
                 {
                     petId = static_cast<uint32>(PETID_HARLEQUINFRAME) + static_cast<uint32>(PChar->PAutomaton->getFrame()) - 0x20;
@@ -14136,7 +14141,9 @@ void CLuaBaseEntity::spawnPet(sol::object const& arg0)
                 {
                     ShowError("CLuaBaseEntity::spawnPet : PetID is nullptr");
                 }
+                
             }
+            */
 
             // Note: arg1 of SpawnPet below was arg0 and not petId
             petutils::SpawnPet(static_cast<CBattleEntity*>(m_PBaseEntity), petId, false);
