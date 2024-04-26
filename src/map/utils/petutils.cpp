@@ -1327,14 +1327,19 @@ namespace petutils
                 PMaster->setModifier(Mod::AVATAR_PERPETUATION, 0);
             }
 
-            static_cast<CCharEntity*>(PMaster)->PLatentEffectContainer->CheckLatentsPetType();
+            CCharEntity* PChar = dynamic_cast<CCharEntity*>(PMaster);
 
-            // clang-format off
-            PMaster->ForParty([](CBattleEntity* PMember)
+            if (PChar)
             {
-                static_cast<CCharEntity*>(PMember)->PLatentEffectContainer->CheckLatentsPartyAvatar();
-            });
-            // clang-format on
+                PChar->PLatentEffectContainer->CheckLatentsPetType();
+
+                // clang-format off
+                PMaster->ForParty([](CBattleEntity* PMember)
+                {
+                    static_cast<CCharEntity*>(PMember)->PLatentEffectContainer->CheckLatentsPartyAvatar();
+                });
+                // clang-format on
+            }
 
             if (PPetEnt->getPetType() != PET_TYPE::AUTOMATON)
             {
@@ -1343,6 +1348,11 @@ namespace petutils
             else
             {
                 PPetEnt->PAI->SetController(nullptr);
+                PPetEnt->PMaster = nullptr;
+                if (PChar)
+                {
+                    PChar->PAutomaton = nullptr;
+                }
             }
             PChar->removePetModifiers(PPetEnt);
             charutils::BuildingCharPetAbilityTable(PChar, PPetEnt, 0); // blank the pet commands
