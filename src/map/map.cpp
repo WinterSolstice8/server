@@ -715,7 +715,7 @@ int32 recv_parse(int8* buff, size_t* buffsize, sockaddr_in* from, map_session_da
         map_session_data->server_packet_id = 0;
         return 0;
     }
-    else
+    else if (map_session_data->blowfish.status != BLOWFISH_WAITING) // If in waiting state, packets will be unable to be decrypted anyway...Z
     {
         // char packets
         if (map_decipher_packet(buff, *buffsize, from, map_session_data) == -1)
@@ -740,9 +740,8 @@ int32 recv_parse(int8* buff, size_t* buffsize, sockaddr_in* from, map_session_da
 
             return 0;
         }
-
-        return 0;
     }
+    return -1;
 }
 
 /************************************************************************
@@ -1180,7 +1179,7 @@ int32 map_cleanup(time_point tick, CTaskMgr::CTask* PTask)
 
                             PChar->status    = STATUS_TYPE::SHUTDOWN;
                             auto basicPacket = CBasicPacket();
-                            PacketParser[0x00D](map_session_data, PChar, basicPacket);
+                            charutils::removeCharFromZone(PChar);
                         }
                         else
                         {

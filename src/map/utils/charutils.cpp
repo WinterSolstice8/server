@@ -6521,6 +6521,7 @@ namespace charutils
             PChar->resetPetZoningInfo();
         }
 
+        removeCharFromZone(PChar);
         PChar->pushPacket(new CServerIPPacket(PChar, type, ipp));
     }
 
@@ -7120,6 +7121,116 @@ namespace charutils
             return _sql->GetUIntData(0);
         }
         return 0;
+    }
+
+    void removeCharFromZone(CCharEntity* PChar)
+    {
+        if (PChar)
+        {
+            map_session_data_t* PSession = nullptr;
+            for (auto it: map_session_list)
+            {
+                if (it.second->charID == PChar->id)
+                {
+                    PSession = it.second;
+                }
+            }
+
+            if (!PSession)
+            {
+                ShowCritical("Failed to remove char %s from zone due to missing map session data!", PChar->getName());
+                return;
+            }
+
+            if (PChar->status == STATUS_TYPE::DISAPPEAR && (PSession->blowfish.status == BLOWFISH_WAITING || PSession->blowfish.status == BLOWFISH_SENT)) // Character has already requested to zone, do nothing.
+            {
+                return;
+            }
+
+            PSession->blowfish.status = BLOWFISH_WAITING;
+
+            PChar->TradePending.clean();
+            PChar->InvitePending.clean();
+            PChar->PWideScanTarget = nullptr;
+
+            if (PChar->animation == ANIMATION_ATTACK)
+            {
+                PChar->animation = ANIMATION_NONE;
+                PChar->updatemask |= UPDATE_HP;
+            }
+
+            if (!PChar->PTrusts.empty())
+            {
+                PChar->ClearTrusts();
+            }
+
+            if (PChar->status == STATUS_TYPE::SHUTDOWN)
+            {
+                if (PChar->PParty != nullptr)
+                {
+                    if (PChar->PParty->m_PAlliance != nullptr)
+                    {
+                        if (PChar->PParty->GetLeader() == PChar)
+                        {
+                            if (PChar->PParty->HasOnlyOneMember())
+                            {
+                                if (PChar->PParty->m_PAlliance->hasOnlyOneParty())
+                                {
+                                    PChar->PParty->m_PAlliance->dissolveAlliance();
+                                }
+                                else
+                                {
+                                    PChar->PParty->m_PAlliance->removeParty(PChar->PParty);
+                                }
+                            }
+                            else
+                            { // party leader logged off - will pass party lead
+                                PChar->PParty->RemoveMember(PChar);
+                            }
+                        }
+                        else
+                        { // not party leader - just drop from party
+                            PChar->PParty->RemoveMember(PChar);
+                        }
+                    }
+                    else
+                    {
+                        // normal party - just drop group
+                        PChar->PParty->RemoveMember(PChar);
+                    }
+                }
+
+                if (PChar->shouldPetPersistThroughZoning())
+                {
+                    PChar->setPetZoningInfo();
+                }
+                else
+                {
+                    PChar->resetPetZoningInfo();
+                }
+
+                PSession->shuttingDown = 1;
+                _sql->Query("UPDATE char_stats SET zoning = 0 WHERE charid = %u", PChar->id);
+            }
+            else
+            {
+                PSession->shuttingDown = 2;
+                _sql->Query("UPDATE char_stats SET zoning = 1 WHERE charid = %u", PChar->id);
+                charutils::CheckEquipLogic(PChar, SCRIPT_CHANGEZONE, PChar->getZone());
+            }
+
+            if (PChar->loc.zone != nullptr)
+            {
+                PChar->loc.zone->DecreaseZoneCounter(PChar);
+            }
+
+            PChar->PersistData();
+            charutils::SaveCharStats(PChar);
+            charutils::SaveCharExp(PChar, PChar->GetMJob());
+            charutils::SaveEminenceData(PChar);
+
+            PChar->status = STATUS_TYPE::DISAPPEAR;
+        }
     }
 
 }; // namespace charutils

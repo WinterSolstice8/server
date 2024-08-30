@@ -276,7 +276,7 @@ void SmallPacket0x00A(map_session_data_t* const PSession, CCharEntity* const PCh
         {
             // Remove the char from previous zone, and unset shuttingDown (already in next zone)
             auto basicPacket = CBasicPacket();
-            PacketParser[0x00D](PSession, PChar, basicPacket);
+            charutils::removeCharFromZone(PChar);
         }
 
         PSession->shuttingDown = 0;
@@ -469,7 +469,8 @@ void SmallPacket0x00C(map_session_data_t* const PSession, CCharEntity* const PCh
 /************************************************************************
  *                                                                       *
  *  Player Leaving Zone (Dezone)                                         *
- *                                                                       *
+ *  This packet is not gauranteed to hit us, unlike 0x00A.               *
+ *  No important logic should be handled here.                           *
  ************************************************************************/
 
 void SmallPacket0x00D(map_session_data_t* const PSession, CCharEntity* const PChar, CBasicPacket& data)
@@ -477,107 +478,6 @@ void SmallPacket0x00D(map_session_data_t* const PSession, CCharEntity* const PCh
     TracyZoneScoped;
 
     std::ignore = data;
-
-    if (PChar->status == STATUS_TYPE::DISAPPEAR && (PSession->blowfish.status == BLOWFISH_WAITING || PSession->blowfish.status == BLOWFISH_SENT)) // Character has already requested to zone, do nothing.
-    {
-        return;
-    }
-
-    PSession->blowfish.status = BLOWFISH_WAITING;
-
-    PChar->TradePending.clean();
-    PChar->InvitePending.clean();
-    PChar->PWideScanTarget = nullptr;
-
-    if (PChar->animation == ANIMATION_ATTACK)
-    {
-        PChar->animation = ANIMATION_NONE;
-        PChar->updatemask |= UPDATE_HP;
-    }
-
-    if (!PChar->PTrusts.empty())
-    {
-        PChar->ClearTrusts();
-    }
-
-    if (PChar->status == STATUS_TYPE::SHUTDOWN)
-    {
-        if (PChar->PParty != nullptr)
-        {
-            if (PChar->PParty->m_PAlliance != nullptr)
-            {
-                if (PChar->PParty->GetLeader() == PChar)
-                {
-                    if (PChar->PParty->HasOnlyOneMember())
-                    {
-                        if (PChar->PParty->m_PAlliance->hasOnlyOneParty())
-                        {
-                            PChar->PParty->m_PAlliance->dissolveAlliance();
-                        }
-                        else
-                        {
-                            PChar->PParty->m_PAlliance->removeParty(PChar->PParty);
-                        }
-                    }
-                    else
-                    { // party leader logged off - will pass party lead
-                        PChar->PParty->RemoveMember(PChar);
-                    }
-                }
-                else
-                { // not party leader - just drop from party
-                    PChar->PParty->RemoveMember(PChar);
-                }
-            }
-            else
-            {
-                // normal party - just drop group
-                PChar->PParty->RemoveMember(PChar);
-            }
-        }
-
-        if (PChar->shouldPetPersistThroughZoning())
-        {
-            PChar->setPetZoningInfo();
-        }
-        else
-        {
-            PChar->resetPetZoningInfo();
-        }
-
-        PSession->shuttingDown = 1;
-        _sql->Query("UPDATE char_stats SET zoning = 0 WHERE charid = %u", PChar->id);
-    }
-    else
-    {
-        PSession->shuttingDown = 2;
-        _sql->Query("UPDATE char_stats SET zoning = 1 WHERE charid = %u", PChar->id);
-        charutils::CheckEquipLogic(PChar, SCRIPT_CHANGEZONE, PChar->getZone());
-
-        if (PChar->CraftContainer->getItemsCount() > 0 && PChar->animation == ANIMATION_SYNTH)
-        {
-            // NOTE:
-            // Supposed non-losable items are reportely lost if this condition is met:
-            // https://ffxiclopedia.fandom.com/wiki/Lu_Shang%27s_Fishing_Rod
-            // The broken rod can never be lost in a normal failed synth. It will only be lost if the synth is
-            // interrupted in some way, such as by being attacked or moving to another area (e.g. ship docking).
-
-            ShowWarning("SmallPacket0x00D: %s attempting to zone in the middle of a synth, failing their synth!", PChar->getName());
-            synthutils::doSynthFail(PChar);
-        }
-    }
-
-    if (PChar->loc.zone != nullptr)
-    {
-        PChar->loc.zone->DecreaseZoneCounter(PChar);
-    }
-
-    PChar->PersistData();
-    charutils::SaveCharStats(PChar);
-    charutils::SaveCharExp(PChar, PChar->GetMJob());
-    charutils::SaveEminenceData(PChar);
-
-    PChar->status = STATUS_TYPE::DISAPPEAR;
 }
 
 /************************************************************************
