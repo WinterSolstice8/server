@@ -205,7 +205,9 @@ xi.chocobo.renterOnEventFinish = function(player, csid, option, eventSucceed)
                 updatePrice(zoneId, info, price)
 
             else
-                printf('[warning] player %s reached succeed without enough currency in xi.chocobo.renterOnEventFinish', player:getName())
+                printf('[warning] player %s reached succeed without enough currency in xi.chocobo.renterOnEventFinish',
+                    player:getName())
+                return
             end
         end
 
