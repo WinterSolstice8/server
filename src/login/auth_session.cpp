@@ -194,6 +194,8 @@ void auth_session::read_func()
                 return;
             }
 
+            bool usedOTP = false;
+
             if (otpHelpers::doesAccountNeedOTP(username, "TOTP"))
             {
                 if (!otpHelpers::validateTOTP(otp, otpHelpers::getAccountSecret(username, "TOTP")))
@@ -201,6 +203,8 @@ void auth_session::read_func()
                     sendLoginResult(login_result::LOGIN_ERROR, 1);
                     return;
                 }
+
+                usedOTP = true;
             }
 
             // We've validated the password by this point, get account info
@@ -220,6 +224,14 @@ void auth_session::read_func()
 
                     zmqDealerWrapper_.outgoingQueue_.enqueue(zmq::message_t(payload.data(), payload.size()));
 
+                    // set Satchel to the same size as inventory on all chars on their account if character has OTP
+                    // Note: Upgrades happen in-game with gobbiebag
+                    if (usedOTP)
+                    {
+                        db::preparedStmt("UPDATE char_storage a JOIN char_storage b ON a.charid = b.charid "
+                                         "SET a.satchel = b.inventory "
+                                         "WHERE a.charid IN (SELECT charid FROM chars WHERE accid = ?)", accountID);
+                    }
                     // TODO: Lock out same account logging in multiple times. Can check data/view session existence on same IP/account?
                     // Not a real problem because the account is locked out when a character is logged in.
 
