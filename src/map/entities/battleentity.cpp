@@ -452,14 +452,14 @@ bool CBattleEntity::Rest(float rate)
 uint32 CBattleEntity::GetWeaponDelay(bool tp)
 {
     TracyZoneScoped;
-    uint32 finalDelay = 8000; // 480 (base) * 1000 / 60 (milisecond conversion)
+    float finalDelay = 8000.0f; // 480 (base) * 1000 / 60 (millisecond conversion)
 
     if (auto* weapon = dynamic_cast<CItemWeapon*>(m_Weapons[SLOT_MAIN]))
     {
-        uint16 weaponDelay = weapon->getDelay() + getMod(Mod::DELAY);
+        float weaponDelay = weapon->getDelay() + getMod(Mod::DELAY);
 
         // Flat bonuses/Penalties (Bonuses would be negative in value)
-        int16 martialArts = 0;
+        float martialArts = 0.0f;
 
         // Multipliers
         float dualWieldMultiplier = 1.0f;
@@ -469,7 +469,7 @@ uint32 CBattleEntity::GetWeaponDelay(bool tp)
         // H2H
         if (weapon->isHandToHand())
         {
-            martialArts = getMod(Mod::MARTIAL_ARTS) * 1000 / 60; // TODO: Job points?
+            martialArts = static_cast<double>(getMod(Mod::MARTIAL_ARTS)) * 1000.0f / 60.0f; // TODO: Job points?
         }
 
         // Sub-weapon
@@ -483,10 +483,10 @@ uint32 CBattleEntity::GetWeaponDelay(bool tp)
         // Handle Hundred Fists directly.
         if (!tp && StatusEffectContainer->HasStatusEffect(EFFECT_HUNDRED_FISTS))
         {
-            finalDelay = std::clamp<uint16>(weaponDelay - martialArts, 1600, 8000);
+            finalDelay = std::clamp(weaponDelay - martialArts, 100.f, 8000.f); // No theoretical floor known yet
             finalDelay = finalDelay * 0.25f;
 
-            return finalDelay;
+            return std::floor(finalDelay);
         }
 
         // Haste and delay reductions that don't affect tp.
@@ -513,17 +513,17 @@ uint32 CBattleEntity::GetWeaponDelay(bool tp)
                     hasteAbility = hasteAbility + getMod(Mod::TWOHAND_HASTE_ABILITY) / 10000.0f;
                 }
 
-                hasteMagic   = std::clamp<float>(hasteMagic, -1.0f, 0.4375f);
-                hasteAbility = std::clamp<float>(hasteAbility, -0.25f, 0.25f);
-                hasteGear    = std::clamp<float>(hasteGear, -0.25f, 0.25f);
+                hasteMagic   = std::clamp(hasteMagic, -1.0f, 0.4375f);
+                hasteAbility = std::clamp(hasteAbility, -0.25f, 0.25f);
+                hasteGear    = std::clamp(hasteGear, -0.25f, 0.25f);
 
-                hasteMultiplier = std::clamp<float>(1.0f - hasteMagic - hasteAbility - hasteGear, 0.2f, 2.0f);
+                hasteMultiplier = std::clamp(1.0f - hasteMagic - hasteAbility - hasteGear, 0.2f, 2.0f);
             }
         }
 
         // Store upper and lower values.
-        uint16 minDelay = weaponDelay * 0.2;
-        uint32 maxDelay = weaponDelay * 2;
+        float minDelay = weaponDelay * 0.2f;
+        float maxDelay = weaponDelay * 2.0f;
 
         // Apply delay modifications.
         finalDelay = weaponDelay - martialArts;
@@ -532,10 +532,10 @@ uint32 CBattleEntity::GetWeaponDelay(bool tp)
         finalDelay = finalDelay * delayModMultiplier;
 
         // Clamp
-        finalDelay = std::clamp<uint32>(finalDelay, minDelay, maxDelay);
+        finalDelay = std::clamp(finalDelay, minDelay, maxDelay);
     }
 
-    return finalDelay;
+    return std::floor(finalDelay);
 }
 
 float CBattleEntity::GetMeleeRange(const CBattleEntity* target) const

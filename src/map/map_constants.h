@@ -40,7 +40,7 @@ using namespace std::chrono_literals;
 static constexpr auto kTimeServerTickInterval = 2400ms;
 
 // 2.5 logic updates per second
-static constexpr auto kLogicUpdateRate = 2.5f;
+static constexpr auto kLogicUpdateRate = 10.f;
 
 // Tick/update every 400ms
 // NOTE: Many things are tied to and balanced around this rate, so changing it will have a significant impact on gameplay.
@@ -51,10 +51,10 @@ static constexpr auto kLogicUpdateInterval = std::chrono::milliseconds(static_ca
 static constexpr auto kTriggerAreaInterval = std::chrono::milliseconds(static_cast<uint64>(1000.0f / (kLogicUpdateRate * 2.0f)));
 
 // Split betweek task manager and networking workload (200ms)
-static constexpr auto kMainLoopInterval = 200ms;
+static constexpr auto kMainLoopInterval = 100ms;
 
 // If the main loop is more than 100ms behind, we're in trouble.
-static constexpr auto kMainLoopBacklogThreshold = 100ms;
+static constexpr auto kMainLoopBacklogThreshold = 500ms;
 
 // Packet & networking constants
 static constexpr auto kMaxBufferSize           = 2500U;
