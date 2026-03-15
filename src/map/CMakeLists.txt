@@ -205,6 +205,8 @@ foreach(entry ${INIT_FILE_ENTRIES})
     endif()
 endforeach()
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -g -fno-omit-frame-pointer -g")
+
 add_executable(xi_map
     ${APP_SOURCES}
     ${resource})
@@ -232,6 +234,8 @@ target_link_libraries(xi_map_lib
         project_options
     PRIVATE
         project_warnings
+
+-fsanitize=address
 )
 
 target_include_directories(xi_map

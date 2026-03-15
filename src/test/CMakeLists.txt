@@ -51,6 +51,9 @@ if (APPLE)
     disable_lto(xi_test)
 endif()
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -g -fno-omit-frame-pointer -g")
+
+
 target_link_libraries(xi_test_lib
     PUBLIC
         xi_connect_lib
@@ -61,6 +64,7 @@ target_link_libraries(xi_test_lib
         project_options
     PRIVATE
         project_warnings
+-fsanitize=address
 )
 
 target_include_directories(xi_test_lib
