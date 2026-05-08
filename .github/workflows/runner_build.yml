@@ -226,7 +226,7 @@ jobs:
 
       - name: Build
         if: ${{ env.SKIP_BUILD != 'true' }}
-        run: cmake --build build | tee build.log
+        run: cmake --build build -- -j4 | tee build.log
 
       - name: Upload artifact
         if: ${{ inputs.upload_artifact && env.SKIP_BUILD != 'true' }}
